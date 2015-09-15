@@ -1,12 +1,26 @@
-var server = require("./server");
-var router = require("./router");
-var requestHandlers = require("./requestHandlers.js");
+var http = require('http');
+var mysql = require("mysql");
 
-// Route list
-var handle = {
-    "/": requestHandlers.start,
-    "/start": requestHandlers.start,
-    "/upload": requestHandlers.upload
-};
+var cMysql  = mysql.createPool({
+    user: "stat",
+    password: "123123",
+    database: "est-stat"
+});
 
-server.start(router.route, handle);
+http.createServer(function (request, response) {
+    // Добавляем обработчик события.
+
+    cMysql.getConnection(function(err, connection){
+        if (err){
+            console.log("MYSQL: can't get connection from pool:",err)
+        } else {
+            // Запрос к базе данных.
+            connection.query('SELECT * FROM lim_pages;', function (error, rows, fields) {
+                response.writeHead(200, {'Content-Type': 'text/plain'}); //x-application/json
+                response.write(JSON.stringify(rows));
+                response.end();
+            });
+        }
+    });
+
+}).listen(8888);
